@@ -12,6 +12,27 @@ export interface KarmaResponse {
   history: string;
 }
 
+export async function receiverIsVerified(
+  db: SQLite.Database,
+  msg: TelegramBot.Message
+) {
+  const receiver = msg.reply_to_message?.from;
+
+  if (!receiver) {
+    return true
+  }
+
+  const stmt = db.prepare(`
+        SELECT *
+        FROM users
+        WHERE user_id = ?
+      `);
+
+  const user = stmt.get(receiver.id) as { user_id: string; verified: boolean } | undefined;
+
+  return Boolean(user?.verified);
+}
+
 export async function updateBalance(
   db: SQLite.Database,
   msg: TelegramBot.Message,

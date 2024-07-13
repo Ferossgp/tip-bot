@@ -9,6 +9,7 @@ import {
   getUserBalance,
   getUserKarma,
   insertUsers,
+  receiverIsVerified,
   updateBalance,
 } from "./bot/utils";
 
@@ -86,12 +87,24 @@ bot.on("message", async (msg) => {
       const resp = await updateBalance(db, msg, amount, token);
       if (!resp) return;
 
-      return bot
-        .sendMessage(
-          msg.chat.id,
-          `${msg?.reply_to_message?.from?.first_name} has now ${resp?.respReceiver?.balance} of $${token}`
-        )
-        .catch(console.log);
+      const verified = await receiverIsVerified(db, msg)
+
+      if (!verified) {
+        return bot
+          .sendMessage(
+            msg.chat.id,
+            `${msg?.reply_to_message?.from?.first_name} register with [Sir Connect](t.me/tysirbot/sirconnect) to claim your ${resp?.respReceiver?.balance} $${token.toUpperCase()}`,
+            { parse_mode: 'Markdown' })
+          .catch(console.log);
+      } else {
+        return bot
+          .sendMessage(
+            msg.chat.id,
+            `${msg?.reply_to_message?.from?.first_name} has now ${resp?.respReceiver?.balance} of $${token.toUpperCase()}`
+          )
+          .catch(console.log);
+      }
+
     }
   }
 });
