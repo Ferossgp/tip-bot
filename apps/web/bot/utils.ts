@@ -6,10 +6,9 @@ export interface KarmaResponse {
   groupId: number;
   userName: string;
   firstName: string;
-  givenApes: number;
-  apesBalance: number;
-  givenNouns: number;
-  nounsBalance: number;
+  tokenId: string;
+  balance: number;
+  givenToken: number;
   history: string;
 }
 
@@ -27,29 +26,26 @@ export async function updateBalance(
       throw new Error("Sender or receiver information is missing.");
     }
 
-    const balance = token === "apes" ? "apesBalance" : "nounsBalance";
-    const given = token === "apes" ? "givenApes" : "givenNouns";
-
     const updateUserKarma = db.prepare(`
-        INSERT INTO Karma (userId, groupId, userName, firstName,  ${balance})
+        INSERT INTO Karma (userId, userName, firstName, tokenId, balance)
         VALUES (?, ?, ?, ?, ?)
-        ON CONFLICT(userId, groupId)
+        ON CONFLICT(userId, tokenId)
         DO UPDATE SET
-          userName = excluded.userName,
+         userName = excluded.userName,
           firstName = excluded.firstName,
-          ${balance} = ${balance} - excluded.apesBalance,
-          ${given} = ${given} + excluded.apesBalance
+          balance = balance - excluded.balance,
+          givenToken = givenToken + excluded.balance
         RETURNING *
       `);
 
     const updateReceiverKarma = db.prepare(`
-        INSERT INTO Karma (userId, groupId, userName, firstName, ${balance}, history)
+        INSERT INTO Karma (userId, userName, firstName, tokenId, balance, history)
         VALUES (?, ?, ?, ?, ?, ?)
-        ON CONFLICT(userId, groupId)
+        ON CONFLICT(userId, tokenId)
         DO UPDATE SET
-          userName = excluded.userName,
+        userName = excluded.userName,
           firstName = excluded.firstName,
-          ${balance} = ${balance} + excluded.apesBalance,
+          balance = balance + excluded.balance,
           history = json_insert(history, '$[' || json_array_length(history) || ']', 
           json('{"timestamp": ' || strftime('%s', 'now') || ',
            "balanceChange": ' || ? || ',
@@ -64,24 +60,22 @@ export async function updateBalance(
 
     const senderData = updateUserKarma.get(
       sender.id,
-      msg.chat.id,
       sender.username,
       sender.first_name,
+      token,
       incValue
     );
 
     const receiverData = updateReceiverKarma.get(
       receiver.id,
-      msg.chat.id,
       receiver.username,
       receiver.first_name,
+      token,
       incValue,
       historyUpdate,
       incValue,
       sender.id
     );
-
-    console.log(receiverData);
 
     return {
       respSender: senderData,
@@ -94,17 +88,41 @@ export async function updateBalance(
 
 export const getUserKarma = async (
   db: SQLite.Database,
+  userId: number
+): Promise<KarmaResponse[] | null> => {
+  try {
+    const stmt = db.prepare(`
+        SELECT *
+        FROM Karma
+        WHERE userId = ?
+      `);
+
+    const userKarma: KarmaResponse[] | undefined = stmt.all(userId);
+
+    if (!userKarma) {
+      return null;
+    }
+
+    return userKarma;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
+
+export const getUserBalance = async (
+  db: SQLite.Database,
   userId: number,
-  groupId: number
+  tokenId: string
 ): Promise<KarmaResponse | null> => {
   try {
     const stmt = db.prepare(`
         SELECT *
         FROM Karma
-        WHERE userId = ? AND groupId = ?
+        WHERE userId = ? and tokenId = ?
       `);
 
-    const userKarma: KarmaResponse | undefined = stmt.get(userId, groupId);
+    const userKarma: KarmaResponse | undefined = stmt.get(userId, tokenId);
 
     if (!userKarma) {
       return null;
@@ -119,7 +137,8 @@ export const getUserKarma = async (
 
 export const insertUsers = async (
   db: SQLite.Database,
-  msg: TelegramBot.Message
+  msg: TelegramBot.Message,
+  tokenId: string
 ): Promise<void> => {
   const sender = msg.from;
   const receiver = msg.reply_to_message?.from;
@@ -129,57 +148,31 @@ export const insertUsers = async (
   }
 
   const stmt = db.prepare(`
-        INSERT INTO Karma (userId, groupId, firstName, userName)
+        INSERT INTO Karma (userId, tokenId, firstName, userName)
         VALUES (?, ?, ?, ?)
       `);
-  stmt.run(sender.id, msg.chat.id, sender.first_name, sender.username);
-  stmt.run(receiver.id, msg.chat.id, receiver.first_name, receiver.username);
+  stmt.run(sender.id, tokenId, sender.first_name, sender.username);
+  stmt.run(receiver.id, tokenId, receiver.first_name, receiver.username);
 
   return;
 };
 
-export const getTopAPE = async (
+export const getTop = async (
   db: SQLite.Database,
-  groupId: number,
-  asc = false
+  token: string
 ): Promise<KarmaResponse[] | null> => {
   try {
-    const sortOrder = asc ? "ASC" : "DESC";
-
-    const stmt = db.prepare(`
-      SELECT *
-      FROM Karma
-      WHERE groupId = ?
-      ORDER BY apesBalance ${sortOrder}
-      LIMIT 10
-    `);
-
-    const topKarmaUsers: KarmaResponse[] = stmt.all(groupId);
-
-    return topKarmaUsers;
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
-};
-
-export const getTopNouns = async (
-  db: SQLite.Database,
-  groupId: number,
-  asc = false
-): Promise<KarmaResponse[] | null> => {
-  try {
-    const sortOrder = asc ? "ASC" : "DESC";
+    const sortOrder = "DESC";
 
     const stmt = db.prepare(`
         SELECT *
         FROM Karma
-        WHERE groupId = ?
-        ORDER BY nounsBalance ${sortOrder}
+        WHERE tokenId = ?
+        ORDER BY balance ${sortOrder}
         LIMIT 10
       `);
 
-    const topKarmaUsers: KarmaResponse[] = stmt.all(groupId);
+    const topKarmaUsers: KarmaResponse[] = stmt.all(token);
 
     return topKarmaUsers;
   } catch (error) {

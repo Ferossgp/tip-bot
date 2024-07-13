@@ -5,8 +5,8 @@ import SQLite from "better-sqlite3";
 import { getInstanceInfoSync } from "litefs-js";
 import { remember } from "@epic-web/remember";
 import {
-  getTopAPE,
-  getTopNouns,
+  getTop,
+  getUserBalance,
   getUserKarma,
   insertUsers,
   updateBalance,
@@ -39,13 +39,11 @@ function createDatabase() {
   userId INTEGER,
   userName TEXT,
   firstName TEXT,
-  groupId INTEGER,
-  givenApes INTEGER DEFAULT 0,
-  apesBalance INTEGER DEFAULT ${DEFAULT_BALANCE},
-  givenNouns INTEGER DEFAULT 0,
-  nounsBalance INTEGER DEFAULT ${DEFAULT_BALANCE},
+  tokenId string,
+  givenToken INTEGER DEFAULT 0,
+  balance INTEGER DEFAULT ${DEFAULT_BALANCE},
   history TEXT DEFAULT '[]',
-  UNIQUE(userId, groupId)
+  UNIQUE(userId, tokenId)
 );
     `);
 
@@ -66,37 +64,30 @@ bot.on("message", async (msg) => {
   if (msg.reply_to_message && msg.text.includes("$")) {
     if (msg.reply_to_message?.from?.id === msg.from?.id) return;
 
+    if (!msg.from?.id) return;
+
     const text = msg.text.toLowerCase();
     const apesToken = text.match(/\$ape/i)?.[0];
     const nounsToken = text.match(/\$nouns/i)?.[0];
     const amount = Number(text.match(/\d+/)?.[0]);
-    const token = apesToken ? "apes" : "nouns";
+    const token = apesToken ? "ape" : "nouns";
 
     if ((apesToken && amount) || (nounsToken && amount)) {
-      const sender = await getUserKarma(db, msg.from?.id, msg.chat.id);
-      if (sender === null) await insertUsers(db, msg);
+      const sender = await getUserBalance(db, msg.from?.id, token);
 
-      if (
-        (sender && token === "apes" && sender?.apesBalance < amount) ||
-        (sender === null && DEFAULT_BALANCE < amount)
-      ) {
-        bot
-          .sendMessage(
-            msg.chat.id,
-            `You don't have enough $APE to give ${amount} to ${msg?.reply_to_message?.from?.first_name}`
-          )
-          .catch(console.log);
-        return;
+      if (sender === null) {
+        await insertUsers(db, msg, "ape");
+        await insertUsers(db, msg, "nouns");
       }
 
       if (
-        (sender && token === "nouns" && sender?.nounsBalance < amount) ||
+        (sender && sender?.balance < amount) ||
         (sender === null && DEFAULT_BALANCE < amount)
       ) {
         bot
           .sendMessage(
             msg.chat.id,
-            `You don't have enough $NOUNS to give ${amount} to ${msg?.reply_to_message?.from?.first_name}`
+            `You don't have enough $${token} to give ${amount} to ${msg?.reply_to_message?.from?.first_name}`
           )
           .catch(console.log);
         return;
@@ -106,23 +97,12 @@ bot.on("message", async (msg) => {
       const resp = await updateBalance(db, msg, amount, token);
       if (!resp) return;
 
-      if (apesToken) {
-        return bot
-          .sendMessage(
-            msg.chat.id,
-            `${msg?.reply_to_message?.from?.first_name} has now ${resp?.respReceiver?.apesBalance} of $APE`
-          )
-          .catch(console.log);
-      }
-
-      if (nounsToken) {
-        return bot
-          .sendMessage(
-            msg.chat.id,
-            `${msg?.reply_to_message?.from?.first_name} has now ${resp?.respReceiver?.nounsBalance} of $NOUNS`
-          )
-          .catch(console.log);
-      }
+      return bot
+        .sendMessage(
+          msg.chat.id,
+          `${msg?.reply_to_message?.from?.first_name} has now ${resp?.respReceiver?.balance} of $${token}`
+        )
+        .catch(console.log);
     }
   }
 });
@@ -137,12 +117,18 @@ bot.onText(/^\/me/, async (msg) => {
       return;
     }
 
-    const karma = await getUserKarma(db, msg.from?.id, msg.chat.id);
+    const karma = await getUserKarma(db, msg.from?.id);
 
     if (!karma) {
       bot.sendMessage(msg.chat.id, "Your balance is 0").catch(console.log);
       return;
     }
+
+    const apeBalance = karma.filter((k) => k.tokenId === "ape")[0].balance;
+    const givenApes = karma.filter((k) => k.tokenId === "ape")[0].givenToken;
+    const nounsBalance = karma.filter((k) => k.tokenId === "nouns")[0]?.balance;
+    const givenNouns = karma.filter((k) => k.tokenId === "nouns")[0]
+      ?.givenToken;
 
     // Send a message with the user's karma score
     bot
@@ -152,11 +138,11 @@ bot.onText(/^\/me/, async (msg) => {
           msg?.from?.username ? `@${msg.from.username}` : msg?.from?.first_name
         } your balance is:
 
-🐒 $APE: ${karma.apesBalance}
-🐒 Given $APE: ${karma.givenApes}
+🐒 $APE: ${apeBalance}
+🐒 Given $APE: ${givenApes}
 
-🦄 $NOUNS: ${karma.nounsBalance}
-🦄 Given $NOUNS: ${karma.givenNouns}
+🦄 $NOUNS: ${nounsBalance}
+🦄 Given $NOUNS: ${givenNouns}
 `
       )
       .catch(console.log);
@@ -167,7 +153,7 @@ bot.onText(/^\/me/, async (msg) => {
 
 bot.onText(/^\/topApes/, async (msg) => {
   // Get the top 10 users with the most karma in the current group
-  const topKarmaUsers = await getTopAPE(db, msg.chat.id);
+  const topKarmaUsers = await getTop(db, "ape");
   if (!topKarmaUsers) return;
 
   let message = "Top 10 $APE users:\n";
@@ -175,7 +161,7 @@ bot.onText(/^\/topApes/, async (msg) => {
   // Construct a message with the top karma users and their scores
   topKarmaUsers.forEach((user, index) => {
     message += `${index + 1}. ${user.firstName || user.userName} has ${
-      user.apesBalance
+      user.balance
     } of $APE\n`;
   });
 
@@ -185,15 +171,15 @@ bot.onText(/^\/topApes/, async (msg) => {
 
 bot.onText(/^\/topNouns/, async (msg) => {
   // Get the top 10 users with the most karma in the current group
-  const topKarmaUsers = await getTopNouns(db, msg.chat.id);
+  const topKarmaUsers = await getTop(db, "nouns");
   if (!topKarmaUsers) return;
 
-  let message = "Top 10 $APE users:\n";
+  let message = "Top 10 $NOUNS users:\n";
 
   // Construct a message with the top karma users and their scores
   topKarmaUsers.forEach((user, index) => {
     message += `${index + 1}. ${user.firstName || user.userName} has ${
-      user.apesBalance
+      user.balance
     } of $NOUNS\n`;
   });
 
