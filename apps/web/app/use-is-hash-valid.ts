@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 
 export function useIsHashValid() {
-  const [isHashValid, setIsHashValid] = useState(true);
+  const [response, setResponse] = useState({
+    isHashValid: false,
+    verified: false,
+    hasWallet: false,
+  });
 
   useEffect(() => {
-    const submit = async () => {
-      if (!window.Telegram?.WebApp?.initData) {
-        return;
-      }
+    if (typeof window === "undefined") return;
 
+    const submit = async () => {
       try {
         const hash = window.Telegram?.WebApp.initData;
         const response = await fetch("/validate-hash", {
@@ -18,18 +20,22 @@ export function useIsHashValid() {
           },
           body: JSON.stringify({ hash }),
         });
+
         if (!response.ok) {
           throw new Error(`Response status: ${response.status}`);
         }
 
         const json = await response.json();
         if (json.ok) {
-          setIsHashValid(true);
+          setResponse(json);
         }
       } catch (error) { }
     };
+
+    window.Telegram.WebApp.ready();
+
     submit();
   }, []);
 
-  return isHashValid;
+  return response;
 }

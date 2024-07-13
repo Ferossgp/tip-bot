@@ -31,16 +31,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (verifyRes.success) {
     db.prepare(
-      `INSERT INTO users (user_id, world_id, verified) VALUES ($1, $2, $3)`
+      `INSERT INTO users (user_id, world_id, verified) VALUES (@user_id, @world_id, @verified)`
     ).run(
-      proof.user_id,
-      JSON.stringify({
-        proof: proof.proof,
-        merkle_root: proof.merkle_root,
-        nullifier_hash: proof.nullifier_hash,
-        verification_level: proof.verification_level,
-      }),
-      true
+      {
+        user_id: proof.user_id,
+        world_id: JSON.stringify({
+          proof: proof.proof,
+          merkle_root: proof.merkle_root,
+          nullifier_hash: proof.nullifier_hash,
+          verification_level: proof.verification_level,
+        }),
+        verified: 1
+      }
     );
     return json(verifyRes);
   } else {

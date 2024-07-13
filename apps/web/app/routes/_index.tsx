@@ -1,6 +1,8 @@
+import { useIsLoggedIn } from "@dynamic-labs/sdk-react-core";
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Placeholder, Spinner } from '@telegram-apps/telegram-ui';
 import { ClientOnly } from "remix-utils/client-only";
+import { Balances } from "~/components/balances";
 import { Enroll } from "~/components/enroll";
 import { useIsHashValid } from "~/use-is-hash-valid";
 
@@ -20,10 +22,15 @@ const LoaderUi = () => {
 }
 
 const BotContent: React.FC = () => {
-  const isHashValid = useIsHashValid();
+  const response = useIsHashValid();
+  const isLoggedIn = useIsLoggedIn();
 
-  if (isHashValid) {
-    return <Enroll />;
+  if (isLoggedIn) {
+    return <Balances />;
+  }
+
+  if (response.isHashValid) {
+    return <Enroll initialStep={response.verified ? 2 : 1} />;
   }
 
   return <LoaderUi />

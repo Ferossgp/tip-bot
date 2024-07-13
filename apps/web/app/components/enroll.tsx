@@ -1,3 +1,4 @@
+import { DynamicWidget } from "@dynamic-labs/sdk-react-core";
 import {
   Button,
   FixedLayout,
@@ -11,7 +12,7 @@ const Humanity = ({ onSuccess }: { onSuccess: () => void }) => {
   const onVerify = async (proof: ISuccessResult) => {
     const user_id = window.Telegram.WebApp.initDataUnsafe.user?.id;
 
-    if (user_id) throw new Error("User ID is not available");
+    if (user_id == null) throw new Error("User ID is not available");
 
     const result = await fetch("/store-world-id", {
       method: "POST",
@@ -71,23 +72,19 @@ export const CreateWallet = () => {
           style={{ display: "block", width: "256px", height: "256px" }}
         />
       </Placeholder>
+      <DynamicWidget />
     </>
   );
 };
 
-export const Enroll = () => {
-  const [step, setStep] = useState(1);
+export const Enroll = ({ initialStep = 1 }: { initialStep: number }) => {
+  const [step, setStep] = useState(initialStep);
 
   return (
-    <FixedLayout
-      vertical="top"
-      style={{
-        padding: 16,
-      }}
-    >
+    <div className="overflow-y-auto p-4">
       <Steps count={2} progress={step} />
       {step === 1 && <Humanity onSuccess={() => setStep(2)} />}
       {step === 2 && <CreateWallet />}
-    </FixedLayout>
+    </div>
   );
 };

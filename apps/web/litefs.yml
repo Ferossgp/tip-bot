@@ -1,10 +1,10 @@
 fuse:
   # Required. This is the mount directory that applications will
   # use to access their SQLite databases.
-  dir: "${LITEFS_DIR}"
+  dir: "/litefs"
 
 data:
-  dir: "/data/litefs"
+  dir: "/var/lib/litefs"
   # If true, compresses LTX files using LZ4 compression. Enabled by default.
   compress: true
 
@@ -40,7 +40,7 @@ lease:
 
     # A unique key shared by all nodes in the LiteFS cluster.
     # Change this if you are running multiple clusters in a single app!
-    key: "litefs/${FLY_APP_NAME}"
+    key: "litefs/${FLY_APP_NAME}-v2"
 
 proxy:
   # matches the internal_port in fly.toml

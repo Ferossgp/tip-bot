@@ -19,11 +19,22 @@ export const action = async ({
   const data = Object.fromEntries(new URLSearchParams(payload.hash));
   const isValid = await isHashValid(data, process.env.BOT_TOKEN);
 
+  const userObject = JSON.parse(data.user)
+
   // TODO: return if user is verified and has a wallet
-  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(data.user_id);
+  const user = db.prepare('SELECT * FROM users WHERE user_id = ?').get(userObject.id) as {
+    user_id: string,
+    world_id: string,
+    verified: boolean,
+  } | undefined
 
   if (isValid) {
-    return json({ ok: true }, 200);
+    return json({
+      ok: true,
+      isHashValid: true,
+      verified: user?.verified,
+      hasWallet: false,
+    }, 200);
   }
 };
 
