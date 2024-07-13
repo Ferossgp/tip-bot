@@ -19,6 +19,7 @@ const DATABASE_PATH = process.env.DATABASE_PATH;
 const DEFAULT_BALANCE = 5;
 
 function createDatabase() {
+  console.log("Creating database");
   const db = new SQLite(DATABASE_PATH);
 
   const { currentIsPrimary } = getInstanceInfoSync();

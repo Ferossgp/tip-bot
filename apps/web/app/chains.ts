@@ -1,5 +1,5 @@
 import { Chains } from 'bot/constants'
-import { Chain, defineChain } from 'viem'
+import { Address, Chain, defineChain } from 'viem'
 import nouns from "~/images/nouns.jpg";
 import ape from "~/images/apecoin.png";
 
@@ -50,9 +50,37 @@ export const apeChain = defineChain({
     decimals: 18,
   }
 })
-import { morphHolesky, scrollSepolia, sepolia, baseSepolia, arbitrumSepolia, zircuitTestnet } from 'viem/chains'
+import { morphHolesky, scrollSepolia, sepolia as viemSepolis, baseSepolia as viemBaseScan, arbitrumSepolia as viemArbSepolia, zircuitTestnet } from 'viem/chains'
 
-// TODO: add blockscout to all
+const sepolia = {
+  ...viemSepolis,
+  blockExplorers: {
+    default: {
+      name: 'Blockscout',
+      url: 'https://eth-sepolia.blockscout.com/',
+    },
+  },
+} as const
+
+const baseSepolia = {
+  ...viemBaseScan,
+  blockExplorers: {
+    default: {
+      name: 'Blockscout',
+      url: 'https://base-sepolia.blockscout.com/',
+    },
+  },
+}
+const arbitrumSepolia = {
+  ...viemArbSepolia,
+  blockExplorers: {
+    default: {
+      name: 'Blockscout',
+      url: 'https://sepolia-explorer.arbitrum.io/',
+    },
+  },
+}
+
 export { morphHolesky, scrollSepolia, sepolia, baseSepolia, arbitrumSepolia, zircuitTestnet }
 
 export const supportedDynamicNetworks = [
@@ -133,4 +161,26 @@ export const chainIdToChain: Record<Chains, Chain> = {
   'base-sepolia': baseSepolia,
   'arbitrum-sepolia': arbitrumSepolia,
   'zircuit-testnet': zircuitTestnet,
+}
+
+export const chainIdToContractAddress: Record<Chains, Address> = {
+  'ape-chain': '0x0',
+  'zero-chain': '0x0',
+  'morph-holesky': '0x27Eb1CcE195749980c93a066Cc99DC5DE58D9582',
+  'scroll-sepolia': '0x0',
+  'sepolia': '0xf62d149d96060d6804C12814fD6f387A47C42654',
+  'base-sepolia': '0x106aD991745e304e3C2175836dB85AE88FfddBB0',
+  'arbitrum-sepolia': '0x03DF7a86c1506FfFDE626b3F02aF0a4e01E1395a',
+  'zircuit-testnet': '0x27Eb1CcE195749980c93a066Cc99DC5DE58D9582',
+}
+
+export const chainIdToTokenAddress: Record<Chains, Address> = {
+  'ape-chain': '0x0',
+  'zero-chain': '0x0',
+  'morph-holesky': '0x9F7921d02e1740c4Dbf26c65CB9B263a93edB0A5',
+  'scroll-sepolia': '0x0',
+  'sepolia': '0x34182d56d905a195524a8f1813180c134687ca34',
+  'base-sepolia': '0xA830d481741cE7b0A2E0a0e2a780079f10B87d0c',
+  'arbitrum-sepolia': '0x4e5CB09A5dCbAd6aa54a8aaA29b7F50C32349fB2',
+  'zircuit-testnet': '0xaa6dA3B886Fa13ABF371B18Cae7A1c4EAa0DdB6C',
 }

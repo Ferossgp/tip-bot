@@ -16,7 +16,12 @@ data:
 
 # Execute this subprocess once LiteFS connects to the cluster.
 exec:
-  - cmd: "npm start"
+  # - cmd: rm $DATABASE_PATH
+  #   if-candidate: true
+
+  - cmd: pm2 start "npm run start:bot"
+
+  - cmd: npm start
 
 lease:
   type: "consul"

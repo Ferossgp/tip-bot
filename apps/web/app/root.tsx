@@ -16,9 +16,7 @@ import {
   DynamicContextProvider,
   mergeNetworks,
 } from "@dynamic-labs/sdk-react-core";
-
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
-import { supportedDynamicNetworks } from "./chains";
 const queryClient = new QueryClient()
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -40,9 +38,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
               settings={{
                 environmentId: "89a3e926-214b-48b4-be7f-3e48b4122059",
                 walletConnectors: [EthereumWalletConnectors],
-                overrides: {
-                  evmNetworks: supportedDynamicNetworks as any
-                }
               }}
             >
               {children}
