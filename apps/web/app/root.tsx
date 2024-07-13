@@ -6,6 +6,8 @@ import {
   ScrollRestoration,
 } from "@remix-run/react";
 import "./tailwind.css";
+import { AppRoot } from "@telegram-apps/telegram-ui";
+import "@telegram-apps/telegram-ui/dist/styles.css";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -17,7 +19,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        {children}
+        <AppRoot>
+          {children}
+        </AppRoot>
         <ScrollRestoration />
         <Scripts />
       </body>

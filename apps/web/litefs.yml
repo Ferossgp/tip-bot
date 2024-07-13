@@ -1,10 +1,10 @@
 fuse:
   # Required. This is the mount directory that applications will
   # use to access their SQLite databases.
-  dir: "/litefs"
+  dir: "${LITEFS_DIR}"
 
 data:
-  dir: "/var/lib/litefs"
+  dir: "/data/litefs"
   # If true, compresses LTX files using LZ4 compression. Enabled by default.
   compress: true
 
@@ -40,14 +40,10 @@ lease:
 
     # A unique key shared by all nodes in the LiteFS cluster.
     # Change this if you are running multiple clusters in a single app!
-    key: "${FLY_APP_NAME}/primary"
+    key: "litefs/${FLY_APP_NAME}"
 
 proxy:
-  # Bind address for the proxy to listen on.
-  addr: ":3000"
-
-  # Hostport of your application.
-  target: "localhost:3001"
-
-  # Filename of the SQLite database you want to use for TXID tracking.
-  db: "db.sqlite"
+  # matches the internal_port in fly.toml
+  addr: ":${INTERNAL_PORT}"
+  target: "localhost:${PORT}"
+  db: "${DATABASE_FILENAME}"

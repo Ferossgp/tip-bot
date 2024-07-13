@@ -14,9 +14,10 @@ function createDatabase() {
     // TODO: create tables
     db.exec(`PRAGMA journal_mode = WAL`)
     db.exec(`
-			CREATE TABLE IF NOT EXISTS test (
-				key TEXT PRIMARY KEY,
-				value TEXT
+			CREATE TABLE IF NOT EXISTS users (
+				user_id TEXT PRIMARY KEY,
+				world_id TEXT,
+        verified BOOLEAN
 			)
 		`)
   } catch (error: unknown) {

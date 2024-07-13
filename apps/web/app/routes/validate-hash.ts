@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { webcrypto } from 'node:crypto';
 import { json } from "@remix-run/node";
+import { db } from "~/db.server";
 
 export const action = async ({
   request,
@@ -17,6 +18,9 @@ export const action = async ({
 
   const data = Object.fromEntries(new URLSearchParams(payload.hash));
   const isValid = await isHashValid(data, process.env.BOT_TOKEN);
+
+  // TODO: return if user is verified and has a wallet
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(data.user_id);
 
   if (isValid) {
     return json({ ok: true }, 200);

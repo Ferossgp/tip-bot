@@ -41,7 +41,7 @@ RUN npm run build
 FROM base
 
 ENV FLY="true"
-ENV LITEFS_DIR="/litefs/data"
+ENV LITEFS_DIR="/var/lib/litefs"
 ENV DATABASE_FILENAME="sqlite.db"
 ENV DATABASE_PATH="$LITEFS_DIR/$DATABASE_FILENAME"
 ENV DATABASE_URL="file:$DATABASE_PATH"
