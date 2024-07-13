@@ -1,7 +1,6 @@
 import { DynamicWidget } from "@dynamic-labs/sdk-react-core";
 import {
   Button,
-  FixedLayout,
   Placeholder,
   Steps,
 } from "@telegram-apps/telegram-ui";

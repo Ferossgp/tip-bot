@@ -12,8 +12,6 @@ import {
   Spinner,
 } from "@telegram-apps/telegram-ui";
 import { KarmaResponse } from "bot/utils";
-import nouns from "~/images/nouns.jpg";
-import ape from "~/images/apecoin.png";
 import {
   Account,
   Chain,
@@ -21,13 +19,9 @@ import {
   Transport,
   WalletClient,
   PublicClient,
-  parseEther,
 } from "viem";
-
-const tokenIdToAvatar = {
-  ape,
-  nouns
-} as Record<string, string>;
+import { chainIdToChain, tokenIdToAvatar, zeroChain } from "~/chains";
+import { Chains, getChainFromToken, tokens } from "bot/constants";
 
 const BalanceRow = ({ balance }: { balance: KarmaResponse }) => {
   const { primaryWallet } = useDynamicContext();
@@ -41,7 +35,20 @@ const BalanceRow = ({ balance }: { balance: KarmaResponse }) => {
         WalletClient<Transport, Chain, Account>
       >();
 
+      console.log(provider);
       if (!provider) return;
+      const chainId = getChainFromToken(balance.tokenId);
+
+      const chain = chainId ? chainIdToChain[chainId] : undefined
+
+      if (!chain) return;
+
+      await provider.switchChain({
+        id: chain.id,
+      });
+
+      console.log('here')
+      console.log(await provider.getChainId());
 
       // const proof = await fetch("/claim", {
       //   method: "POST",
@@ -68,15 +75,24 @@ const BalanceRow = ({ balance }: { balance: KarmaResponse }) => {
         hash,
       });
 
-      return transactionHash;
+      const blockscout = provider.chain.blockExplorers?.default.url;
+
+      return `${blockscout}/tx/${transactionHash}`
     },
+    onError: (error) => {
+      console.error(error);
+    }
   })
 
   const claim = () => mutate()
 
   const openBlockscout = () => {
-    alert('TODO: Open blockscout')
+    if (!data) return;
+
+    window.open(data, '_blank')
   }
+
+  const avatar = tokenIdToAvatar[balance.tokenId];
 
   return (
     <Modal
@@ -86,7 +102,7 @@ const BalanceRow = ({ balance }: { balance: KarmaResponse }) => {
       trigger={
         <Cell
           after={<Badge type="number">{balance.balance}</Badge>}
-          before={<Avatar size={48} src={tokenIdToAvatar[balance.tokenId]} />}
+          before={<Avatar size={48} src={avatar} />}
           titleBadge={<Badge type="dot" />}
         >
           ${balance.tokenId.toUpperCase()}
@@ -99,7 +115,7 @@ const BalanceRow = ({ balance }: { balance: KarmaResponse }) => {
         ) : (
           <>
             <Placeholder description={`You have a balance of ${balance.balance} $${balance.tokenId.toUpperCase()}`} header={`$${balance.tokenId.toUpperCase()}`}>
-              <Avatar size={96} src={tokenIdToAvatar[balance.tokenId]} />
+              <Avatar size={96} src={avatar} />
             </Placeholder>
             <Button stretched onClick={claim}>{status === 'pending' ? <Spinner size="s" /> : "Claim all tokens"}</Button>
           </>
@@ -127,7 +143,7 @@ export const Balances = () => {
         <LargeTitle weight="1">Unclaimed Balances</LargeTitle>
         {status === "pending" ? (
           <Spinner size="l" />
-        ) : data.length === 0 ? (
+        ) : data?.length === 0 ? (
           <Placeholder description="You do not have any active balances" header="No balances">
             <img
               alt="Telegram sticker"
@@ -140,7 +156,7 @@ export const Balances = () => {
             />
           </Placeholder>
         ) : (
-          data.map((item) => <BalanceRow balance={item} />)
+          data?.map((item) => <BalanceRow balance={item} />)
         )}
       </List>
     </div>

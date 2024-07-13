@@ -12,6 +12,7 @@ import {
   receiverIsVerified,
   updateBalance,
 } from "./bot/utils";
+import { tokens } from "bot/constants";
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
 const DATABASE_PATH = process.env.DATABASE_PATH;
@@ -57,17 +58,15 @@ bot.on("message", async (msg) => {
     if (!msg.from?.id) return;
 
     const text = msg.text.toLowerCase();
-    const apesToken = text.match(/\$ape/i)?.[0];
-    const nounsToken = text.match(/\$nouns/i)?.[0];
+    const tokenMention = tokens.find((token) => text.includes('$' + token.symbol.toLowerCase()));
     const amount = Number(text.match(/\d+/)?.[0]);
-    const token = apesToken ? "ape" : "nouns";
+    const token = tokenMention?.symbol.toLowerCase();
 
-    if ((apesToken && amount) || (nounsToken && amount)) {
+    if (token && amount) {
       const sender = await getUserBalance(db, msg.from?.id, token);
 
       if (sender === null) {
-        await insertUsers(db, msg, "ape");
-        await insertUsers(db, msg, "nouns");
+        await Promise.all(tokens.map((token) => insertUsers(db, msg, token.symbol.toLowerCase())));
       }
 
       if (
@@ -77,7 +76,7 @@ bot.on("message", async (msg) => {
         bot
           .sendMessage(
             msg.chat.id,
-            `You don't have enough $${token} to give ${amount} to ${msg?.reply_to_message?.from?.first_name}`
+            `You don't have enough $${token.toUpperCase()} to give ${amount} to ${msg?.reply_to_message?.from?.first_name}`
           )
           .catch(console.log);
         return;

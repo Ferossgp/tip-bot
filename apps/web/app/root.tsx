@@ -9,17 +9,16 @@ import "./tailwind.css";
 import { AppRoot } from "@telegram-apps/telegram-ui";
 import "@telegram-apps/telegram-ui/dist/styles.css";
 import {
-  useQuery,
-  useMutation,
-  useQueryClient,
   QueryClient,
   QueryClientProvider,
 } from '@tanstack/react-query'
 import {
   DynamicContextProvider,
+  mergeNetworks,
 } from "@dynamic-labs/sdk-react-core";
 
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
+import { supportedDynamicNetworks } from "./chains";
 const queryClient = new QueryClient()
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -34,11 +33,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <QueryClientProvider client={queryClient}>
-          <AppRoot>
+          <AppRoot style={{
+            backgroundColor: 'var(--tgui--bg_color)'
+          }}>
             <DynamicContextProvider
               settings={{
                 environmentId: "89a3e926-214b-48b4-be7f-3e48b4122059",
                 walletConnectors: [EthereumWalletConnectors],
+                overrides: {
+                  evmNetworks: supportedDynamicNetworks as any
+                }
               }}
             >
               {children}
