@@ -10,14 +10,14 @@ export const action = async ({
     return json({ message: "Method not allowed" }, 405);
   }
 
-  if (process.env.BOT_TOKEN == null) {
+  if (process.env.TELEGRAM_BOT_TOKEN == null) {
     return json({ message: "Internal server error" }, 500);
   }
 
   const payload = await request.json();
 
   const data = Object.fromEntries(new URLSearchParams(payload.hash));
-  const isValid = await isHashValid(data, process.env.BOT_TOKEN);
+  const isValid = await isHashValid(data, process.env.TELEGRAM_BOT_TOKEN);
 
   const userObject = JSON.parse(data.user)
 

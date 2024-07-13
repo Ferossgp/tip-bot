@@ -22,18 +22,6 @@ function createDatabase() {
   const { currentIsPrimary } = getInstanceInfoSync();
   if (!currentIsPrimary) return db;
 
-  try {
-    // TODO: create tables
-    db.exec(`
-			CREATE TABLE IF NOT EXISTS test (
-				key TEXT PRIMARY KEY,
-				value TEXT
-			)
-		`);
-  } catch (error: unknown) {
-    throw error;
-  }
-
   db.exec(`
     CREATE TABLE IF NOT EXISTS Karma (
   userId INTEGER,
@@ -56,12 +44,13 @@ if (!token) {
   throw new Error("TELEGRAM_BOT_TOKEN must be provided!");
 }
 
-const bot = new TelegramBot(token, { polling: true });
+const bot = new TelegramBot(token, { polling: true, });
 
 bot.on("message", async (msg) => {
   if (!msg.text || msg.text.startsWith("/")) return;
 
   if (msg.reply_to_message && msg.text.includes("$")) {
+
     if (msg.reply_to_message?.from?.id === msg.from?.id) return;
 
     if (!msg.from?.id) return;
@@ -107,6 +96,13 @@ bot.on("message", async (msg) => {
   }
 });
 
+bot.onText(/^\/help/, async (msg) => {
+  bot.sendMessage(
+    msg.chat.id,
+    `Welcome to the Ty Sir Bot! To register access sir connect app: t.me/tysirbot/sirconnect`
+  );
+})
+
 bot.onText(/^\/me/, async (msg) => {
   try {
     // Find the karma document for the user in the current group
@@ -134,8 +130,7 @@ bot.onText(/^\/me/, async (msg) => {
     bot
       .sendMessage(
         msg.chat.id,
-        `Hi ${
-          msg?.from?.username ? `@${msg.from.username}` : msg?.from?.first_name
+        `Hi ${msg?.from?.username ? `@${msg.from.username}` : msg?.from?.first_name
         } your balance is:
 
 🐒 $APE: ${apeBalance}
@@ -160,9 +155,8 @@ bot.onText(/^\/topApes/, async (msg) => {
 
   // Construct a message with the top karma users and their scores
   topKarmaUsers.forEach((user, index) => {
-    message += `${index + 1}. ${user.firstName || user.userName} has ${
-      user.balance
-    } of $APE\n`;
+    message += `${index + 1}. ${user.firstName || user.userName} has ${user.balance
+      } of $APE\n`;
   });
 
   // Send the message with the top karma users
@@ -178,9 +172,8 @@ bot.onText(/^\/topNouns/, async (msg) => {
 
   // Construct a message with the top karma users and their scores
   topKarmaUsers.forEach((user, index) => {
-    message += `${index + 1}. ${user.firstName || user.userName} has ${
-      user.balance
-    } of $NOUNS\n`;
+    message += `${index + 1}. ${user.firstName || user.userName} has ${user.balance
+      } of $NOUNS\n`;
   });
 
   // Send the message with the top karma users

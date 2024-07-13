@@ -89,7 +89,7 @@ export async function updateBalance(
 export const getUserKarma = async (
   db: SQLite.Database,
   userId: number
-): Promise<KarmaResponse[] | null> => {
+): Promise<KarmaResponse[] | undefined> => {
   try {
     const stmt = db.prepare(`
         SELECT *
@@ -97,18 +97,32 @@ export const getUserKarma = async (
         WHERE userId = ?
       `);
 
-    const userKarma: KarmaResponse[] | undefined = stmt.all(userId);
+    const userKarma = stmt.all(userId) as KarmaResponse[] | undefined
 
     if (!userKarma) {
-      return null;
+      return undefined;
     }
 
     return userKarma;
   } catch (error) {
     console.error(error);
-    return null;
+    return undefined;
   }
 };
+
+export const claimKarma = async (
+  db: SQLite.Database,
+  userId: number,
+  tokenId: string
+): Promise<void> => {
+  const stmt = db.prepare(`
+        UPDATE Karma
+        SET balance = 0
+        WHERE userId = ? and tokenId = ?
+      `);
+
+  stmt.run(userId, tokenId);
+}
 
 export const getUserBalance = async (
   db: SQLite.Database,
@@ -122,7 +136,7 @@ export const getUserBalance = async (
         WHERE userId = ? and tokenId = ?
       `);
 
-    const userKarma: KarmaResponse | undefined = stmt.get(userId, tokenId);
+    const userKarma = stmt.get(userId, tokenId) as KarmaResponse | undefined;
 
     if (!userKarma) {
       return null;
@@ -172,7 +186,7 @@ export const getTop = async (
         LIMIT 10
       `);
 
-    const topKarmaUsers: KarmaResponse[] = stmt.all(token);
+    const topKarmaUsers = stmt.all(token) as KarmaResponse[];
 
     return topKarmaUsers;
   } catch (error) {
