@@ -1,4 +1,7 @@
-import type { MetaFunction } from "@remix-run/node";
+import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import { Placeholder, Spinner } from '@telegram-apps/telegram-ui';
+import { ClientOnly } from "remix-utils/client-only";
+import { useIsHashValid } from "~/use-is-hash-valid";
 
 export const meta: MetaFunction = () => {
   return [
@@ -7,42 +10,31 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export default function Index() {
+const BotContent: React.FC = () => {
+  const isHashValid = useIsHashValid();
+
+  if (isHashValid) {
+    return (
+      <Placeholder
+        header="Title"
+        description="Description"
+      >
+        <img
+          alt="Telegram sticker"
+          src="https://xelene.me/telegram.gif"
+          style={{ display: 'block', width: '144px', height: '144px' }}
+        />
+      </Placeholder>
+    );
+  }
+
   return (
-    <div className="font-sans p-4">
-      <h1 className="text-3xl">Welcome to Remix</h1>
-      <ul className="list-disc mt-4 pl-6 space-y-2">
-        <li>
-          <a
-            className="text-blue-700 underline visited:text-purple-900"
-            target="_blank"
-            href="https://remix.run/start/quickstart"
-            rel="noreferrer"
-          >
-            5m Quick Start
-          </a>
-        </li>
-        <li>
-          <a
-            className="text-blue-700 underline visited:text-purple-900"
-            target="_blank"
-            href="https://remix.run/start/tutorial"
-            rel="noreferrer"
-          >
-            30m Tutorial
-          </a>
-        </li>
-        <li>
-          <a
-            className="text-blue-700 underline visited:text-purple-900"
-            target="_blank"
-            href="https://remix.run/docs"
-            rel="noreferrer"
-          >
-            Remix Docs
-          </a>
-        </li>
-      </ul>
+    <div className="flex w-screen h-screen items-center justify-center">
+      <Spinner size="l" />
     </div>
   );
+}
+
+export default function Index() {
+  return <ClientOnly fallback={null}>{() => <BotContent />}</ClientOnly>;
 }
