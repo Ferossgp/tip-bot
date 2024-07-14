@@ -4,7 +4,7 @@ import { join } from "path";
 import dotenv from "dotenv";
 import path from "path";
 import "@nomicfoundation/hardhat-ignition";
-
+import "@matterlabs/hardhat-zksync";
 
 dotenv.config(); // project root
 dotenv.config({ path: join(process.cwd(), "../../.env") }); // workspace root
@@ -18,12 +18,16 @@ if (!deployerKey) {
 
 const config: HardhatUserConfig = {
   solidity: "0.8.24",
+  zksolc: {
+    version: "latest", // Uses latest available in https://github.com/matter-labs/zksolc-bin
+    settings: {},
+  },
   defaultNetwork: "sepolia",
   paths: {
     sources: "./contracts",
     tests: "./test",
     cache: "./cache",
-    artifacts: "./artifacts"
+    artifacts: "./artifacts",
   },
   networks: {
     hardhat: {
@@ -50,6 +54,33 @@ const config: HardhatUserConfig = {
     },
     arbitrumOne: {
       url: "https://arb1.arbitrum.io/rpc",
+      accounts: [deployerKey as string],
+    },
+    baseSepolia: {
+      url: "https://sepolia.base.org",
+      accounts: [deployerKey as string],
+    },
+    zircuit: {
+      url: `https://zircuit1.p2pify.com`,
+      accounts: [deployerKey as string],
+    },
+    apeChain: {
+      url: "https://jenkins.rpc.caldera.xyz/http",
+      accounts: [deployerKey as string],
+    },
+    morph: {
+      url: "https://rpc-quicknode-holesky.morphl2.io",
+      accounts: [deployerKey as string],
+    },
+    zeroTestnet: {
+      url: "https://rpc.zerion.io/v1/zero-sepolia",
+      zksync: true,
+      ethNetwork: "sepolia",
+      verifyURL: "https://explorer.zero.network/contract_verification",
+      accounts: [deployerKey as string],
+    },
+    scrollSepolia: {
+      url: "https://sepolia-rpc.scroll.io",
       accounts: [deployerKey as string],
     },
   },

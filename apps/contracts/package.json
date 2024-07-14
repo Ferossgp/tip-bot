@@ -20,6 +20,7 @@
     "hardhat": "^2.17.4"
   },
   "dependencies": {
+    "@matterlabs/hardhat-zksync": "^1.1.0",
     "@openzeppelin/contracts": "^5.0.2"
   }
 }
